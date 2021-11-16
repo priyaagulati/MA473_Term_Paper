@@ -1,0 +1,704 @@
+
+\documentclass{beamer}
+ 
+\usepackage[utf8]{inputenc}
+%Load useful packages
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+ 
+\usepackage{mathabx}
+\usepackage{subcaption}
+\usepackage{subfiles}
+\usepackage{url}
+ 
+\usepackage{amssymb}
+\usetheme{Szeged}
+\usecolortheme{beaver}
+ 
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.4\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\textbf{Priya \& Rohan \& Satyadev}
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.6\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+      \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+ 
+\title{Numerical pricing of financial derivatives using
+Jain’s high-order compact scheme}
+\author{Priya Gulati, Rohan Modi, Satyadev Badireddi}
+\date{November 16, 2021}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}{Goal}
+\begin{itemize}
+    \item High-order compact(HOC) scheme of $4^{th}$ order for quasilinear parabolic partial differential equations.
+    \item Pricing of European options and then cover some of its more novel applications for pricing interest rate derivatives.
+    \item Crank-Nicolson used as baseline for comparison.
+    \item Generalised Chan-Karolyi-Longstaff-Sanders (CKLS) family of term structure models for pricing interest rate derivatives.
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{PDE Frameworks: Black-Scholes}
+ 
+\begin{itemize}
+    \item \textbf{SDE: } $\frac{dS_{t}}{S_{t}} = (r-\delta)dt + \sigma dW_{t}$
+    \item Payoff for European call: $g(S_{T}) = max(S_{T}-K, 0) = (S_{T}-K)^{+}$
+    \item If $V(S,t)$ denote the price of such a financial instrument at time $t$, with $V(S,T) = g(S_{T})$, then it satisfies:
+    \begin{equation*}
+    \frac{\partial V}{\partial t}+\frac{1}{2}\sigma^{2}S^{2}\frac{\partial_{2}V}{\partial S^{2}} + (r-\delta)S\frac{\delta V}{\delta S} -rV = 0, \quad S>0, 0\le t \le T
+\end{equation*}
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{PDE Frameworks: Black-Scholes(Contd.)}
+\begin{itemize}
+    \item The above PDE can be explicitly solved for $V(S,t)$ giving the analytical solution:
+\begin{equation*}
+    V(S,t) = Se^{-\delta(T-t)}\phi(d_{1})-Ke^{-r(T-t)}\phi(d_{2})
+\end{equation*}
+\item $\phi$: Distribution function of the standard normal distribution $N(0,1)$.
+\item $d_{2} = \frac{log(S/K) + ((r-\delta) - \sigma^{2}/2)(T-t)}{\sigma \sqrt{T-t}}$
+\item $d_{1} = d_{2} + \sigma \sqrt{T-t}$
+\item Similarly for put option: $V(S,t) = Ke^{-r(T-t)}\phi(-d_{2}) - Se^{-\delta(T-t)}\phi(-d_{1})$
+\end{itemize}
+\end{frame}
+ 
+\begin{frame}{PDE Frameworks: CKLS Interest rate model}
+    \begin{itemize}
+        \item Spot rate $r_{t}$ is stochastic at time $t$, and is governed by the SDE: $
+    dr(t) = \kappa(\theta - r(t))dt + \sigma r(t)^{\gamma}dW_{t}$
+    \itemUnder no arbitrage, the price $V(r,t)$ of some financial instrument with payoff $g(r)$ satisfies the PDE:
+    \begin{equation}
+    \dfrac{\partial V}{\partial t} + \frac{1}{2} \sigma^{2}r^{2\gamma}\frac{\partial^{2}V}{\partial r^{2}} + \kappa(\theta
+    -r)\frac{\partial V}{\partial r} - rV = 0
+    \end{equation}
+    \item For zero-coupon bond with maturity T and face value = $1$, $g(r) = 1$.
+    \item For a European call option on the zero-coupon bond with maturity $T_{0} < T$ and strike price $K$, $g(r) = (P(r,T_{0},T)-K)^{+}$.
+    \end{itemize}
+\end{frame}
+ 
+\begin{frame}{Numerical methods: Black-Scholes}
+\begin{itemize}
+\item The following transformations are made to the Black-Scholes pde$(1)$: 
+\begin{align*}
+    \begin{split}
+        S = {}& Ke^{x}
+    \end{split}\\
+    \begin{split}
+        \tau ={}& \sigma^{2}(T-t)/2
+    \end{split}\\
+    \begin{split}
+        p_{\delta} ={}& 2(r-\delta)/\sigma^{2}
+    \end{split}\\
+    \begin{split}
+        T' ={}& \sigma^{2}T/2 
+    \end{split}\\
+    \begin{split}
+        p ={}& 2r/\sigma^{2}
+    \end{split}
+\end{align*}
+ 
+\item This gives us the constant coefficient problem:
+\begin{equation*}
+    \frac{\partial V}{\partial \tau} = \frac{\partial^{2} V}{\delta x^{2}} + (p_{\delta}-1)\frac{\partial V}{\partial x}-pV, \quad -\infty < x< +\infty, 0 < \tau \le T'
+\end{equation*}
+\end{itemize}
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: Black-Scholes(Contd.)}
+Boundary conditions:
+\begin{itemize}
+    \item A final substitution $u(x, \tau)=e^{p\tau}V(x, \tau)$ is used to reduce above PDE to:
+\begin{equation*}
+    \frac{\partial u}{\partial \tau} = \frac{\partial^{2} u}{\partial x^{2}} + (p_{\delta}-1)\frac{\partial u}{\partial x}, \quad -\infty < x< +\infty, 0 < \tau \le T'
+\end{equation*}
+\item Boundary Conditions: \begin{align*}
+    \begin{split}
+        u(x,0) ={}& K(e^{x}-1)^{+}, \quad -\infty <x < +\infty,
+    \end{split}\\
+    \begin{split}
+        u(x,\tau) ={}& 0, x \xrightarrow{} -\infty
+    \end{split}\\
+    \begin{split}
+        u(x,\tau) ={}& K(e^{x+(p-2\delta/\sigma^{2})\tau}-1), x \xrightarrow{} +\infty
+    \end{split}
+\end{align*}
+    \end{itemize}
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: Black-Scholes(Contd.)}
+    \begin{itemize}
+        \item The unbounded along $x-axis$, is truncated to some finite domain $\Omega = (x_{min}, x_{max})\times [0, T']$.
+        \item Thus we get a uniform mesh of grid points
+\begin{equation*}
+    \Omega_{\Delta} = \{(x_{m},\tau_{n}) \in \Omega, x_{m}=x_{min}+mh, 0\le m \le M, \\ \tau_{n}=nk, 0\le k \le N\}
+\end{equation*}
+\item Taking $b=(1-p_{\delta})$ we have:
+\begin{equation*}
+    \frac{\partial^{2}u}{\partial x^{2}} = b\frac{\partial u}{\partial x} + \frac{\partial u}{\partial \tau} = f(\frac{\partial u}{\partial x}, \frac{\partial u}{\partial \tau})  
+\end{equation*}
+    \end{itemize}
+\end{frame}
+\begin{frame}{Numerical Schemes: Black-Scholes(Contd.)}
+\begin{itemize}
+    \item The Jain's scheme derived from Numerov discretisation of the form:
+ 
+\begin{equation*}
+-\frac{1}{h^{2}}\delta_{x}^{2}u_{m}^{n+1/2}+\frac{1}{12}(f_{m+1}^{n+1/2}+10f_{m}^{n+1/2}+f_{m-1}^{n+1/2})=0
+\end{equation*}
+\item We get the scheme:
+ 
+\begin{equation*}
+    (\beta_{-1}-\gamma_{-1})u_{m-1}^{n+1}+(1-2\beta_{-1})u_{m}^{n+1}+(\beta_{-1}+\gamma_{-1})u_{m+1}^{n+1} = (\beta_{1}+\gamma_{1})u_{m-1}^{n}+(1-2\beta_{1})u_{m}^{n}+(\beta_{1}-\gamma_{1})u_{m+1}^{n}
+\end{equation*}
+where,
+\begin{align*}
+    \begin{split}
+        \beta_{-1} = \frac{1}{12}-\frac{k}{2h^{2}}-\frac{b^{2}k}{24}
+    \end{split}, 
+    \begin{split}
+        \beta_{1} = \frac{1}{12}+\frac{k}{2h^{2}}+\frac{b^{2}k}{24}
+    \end{split}\\
+    \begin{split}
+        \gamma_{-1} = b(\frac{k}{4h}-\frac{h}{24})
+    \end{split},
+    \begin{split}
+        \gamma_{1} = b(\frac{k}{4h}+\frac{h}{24})
+    \end{split}
+\end{align*}
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: Black-Scholes(Contd.)}
+\begin{itemize}
+    \item We let $U^{n} = [u_{0}^{n}, u_{1}^{n} \cdots u_{M}^{n}]$ denote the vector of our numerical solutions at time level $n$.
+ 
+\item Then we can write the above system in matrix form as:
+\begin{equation*}
+    AU^{n+1} = BU^{n}, \quad n \ge 0
+\end{equation*}
+where, 
+\begin{align*}
+    \begin{split}
+        A = tridiag[\beta_{-1}-\gamma_{-1}, 1-2\beta_{-1}, \beta_{-1}+\gamma_{-1}]
+    \end{split}\\
+    \begin{split}
+        B = tridiag[\beta_{-1}+\gamma_{-1}, 1-2\beta_{-1}, \beta_{-1}-\gamma_{-1}]
+    \end{split}\\
+\end{align*}
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: CKLS }
+\begin{itemize}
+    \item We use the substitution $\Tilde{\tau} = T-t$ in (2) to get a forward problem where the discount bond price at time $\Tilde{\tau}$, denoted by $P(r,\Tilde{\tau}, T)$ is the solution of:
+ 
+\item \begin{equation*}
+    \frac{\partial P}{\partial \Tilde{\tau}} = \frac{1}{2} \sigma^{2}r^{2\gamma}\frac{\partial^{2}P}{\partial r^{2}} + \kappa(\theta-r)\frac{\partial P}{\partial r} - rP
+\end{equation*}
+ with initial condition $P(r,0,T)\equiv 1$. 
+ \item  We again need to truncate the $r$ domain in a fashion similar to the Black-Scholes case to be able to apply the numerical scheme. So, $\Omega_{r} = (r_{min}, r_{max})$
+ 
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: CKLS(Contd.) }
+\begin{itemize}
+    \item Thus we get a uniform mesh of grid points
+\begin{equation*}
+    \Omega_{\Delta} = \{(r_{m},\tau_{n}) \in \Omega, r_{m}=r_{min}+mh, 0\le m \le M, \\ 
+    \tau_{n}=nk, 0\le k \le N\}
+\end{equation*}
+ 
+\item Then we have :
+\begin{equation*}
+     \frac{\partial^{2} P}{\partial r^{2}} = \frac{2}{\sigma^{2}r^{2\gamma}}(\frac{\partial P}{\partial \Tilde{\tau}}-\kappa(\theta-r)\frac{\partial P}{\partial r}+rP)\\
+     =f(r,p,\dfrac{\partial P}{\partial \Tilde{\tau}}, \frac{\partial P}{\partial r})
+ \end{equation*}
+ 
+\end{itemize}
+ 
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: CKLS(Contd.) }
+\begin{itemize}
+    \item Let $P_{m}^{n}$ denote the bond price at the grid point $(r_{m}, t_{n})$, then we obtain the Jain's scheme after some standard approximations of the derivative terms as:
+\begin{equation*}
+    b_{m-1}P_{m-1}^{n+1}+b_{m}P_{m}^{n+1}+b_{m+1}P_{m+1}^{n+1} = c_{m-1}P_{m-1}^{n}+c_{m}P_{m}^{n}+c_{m+1}P_{m+1}^{n}
+\end{equation*}
+\item The next slide contains the equations for $b_{\cdot}, c_{\cdot}$
+\end{itemize}
+\end{frame}
+ 
+ 
+\begin{frame}{Numerical Schemes: CKLS(Contd.) }
+\tiny
+\begin{equation*}
+\begin{split}
+b_{m \pm 1} = r_{m - 1}^{- 2 \gamma}r_{m}^{- 2 \gamma}r_{m + 1}^{- 2 \gamma}\left(\left(\sigma\right)^{2} r_{m}^{2 \gamma} \left[\pm \textit{hk} \left(\xi\right)_{m \pm 1} r_{m \pm 1}^{2 \gamma} + r_{m \pm 1}^{2 \gamma} \left(4 h^{2} \pm 3 \textit{hk} \left(\xi\right)_{m \pm 1} + 2 h^{2} k r_{m \pm 1} - 12 k \left(\sigma\right)^{2} r_{m \pm 1}^{2 \gamma}\right)\right]\right)
+\\ \left(\pm h \left(\xi\right)_{m} \left(\pm \textit{hk} \left(\xi\right)_{m \pm 1} r_{m \pm 1}^{2 \gamma} + r_{m \pm 1}^{2 \gamma} \left[4 h^{2} \pm 3 \textit{hk} \left(\xi\right)_{m \pm 1} + 2 h^{2} k r_{m \pm 1} - 10 k \left(\sigma\right)^{2} r_{m \pm 1}^{2 \gamma}\right]\right)\right),
+\end{split}
+\end{equation*}
+\begin{equation*}
+\begin{split}
+ c_{m \pm 1} = r_{m - 1}^{- 2 \gamma}r_{m}^{- 2 \gamma}r_{m + 1}^{- 2 \gamma}\left(\left(\sigma\right)^{2} r_{m}^{2 \gamma} \left[\pm \textit{hk} \left(\xi\right)_{m \pm 1} r_{m \pm 1}^{2 \gamma} + r_{m \pm 1}^{2 \gamma} \left(4 h^{2} \pm 3 \textit{hk} \left(\xi\right)_{m \pm 1} - 2 h^{2} k r_{m \pm 1} + 12 k \left(\sigma\right)^{2} r_{m \pm 1}^{2 \gamma}\right)\right]\right) \\ \left(+ h \left(\xi\right)_{m} \left(\textit{hk} \left(\xi\right)_{m \pm 1} r_{m \pm 1}^{2 \gamma} + r_{m \pm 1}^{2 \gamma} \left[\pm 4 h^{2} + 3 \textit{hk} \left(\xi\right)_{m \pm 1} \pm 2 h^{2} k r_{m \pm 1} \pm 10 k \left(\sigma\right)^{2} r_{m \pm 1}^{2 \gamma}\right]\right)\right), 
+\end{split}
+\end{equation*}
+ 
+\begin{align*}
+ b_{m} & = 4r_{m}^{- 2 \gamma}\left(\textit{hk} \left(\xi\right)_{m - 1} r_{m - 1}^{- 2 \gamma} \left(h \left(\xi\right)_{m} + \left(\sigma\right)^{2} r_{m}^{2 \gamma}\right)\right) \\ & +r_{m + 1}^{- 2 \gamma}\left(\left[h^{2} k \left(\xi\right)_{m} \left(\xi\right)_{m + 1} + \left(\sigma\right)^{2} \left(- \textit{hk} \left(\xi\right)_{m + 1} r_{m}^{2 \gamma} + r_{m + 1}^{2 \gamma} \left[10 h^{2} + 5 h^{2} k r_{m} + 6 k \left(\sigma\right)^{2} r_{m}^{2 \gamma}\right]\right)\right]\right)\\
+ c_{m} & = 4r_{m}^{- 2 \gamma}\left(\textit{hk} \left(\xi\right)_{m + 1} r_{m + 1}^{- 2  \gamma} \left(- h \left(\xi\right)_{m} + \left(\sigma\right)^{2} r_{m}^{2 \gamma}\right)\right) + r_{m - 1}^{- 2 \gamma}\left(\left[- h^{2} k \left(\xi\right)_{m} \left(\xi\right)_{m - 1} - \textit{hk} \left(\sigma\right)^{2} \left(\xi\right)_{m - 1} r_{m}^{2 \gamma}\right]  \\ & + \left(\sigma\right)^{2} \left[10 h^{2} - 5 h^{2} k r_{m} - 6 k \left(\sigma\right)^{2} r_{m}^{2 \gamma}\right]\right).
+ \end{align*}
+\normalsize
+\end{frame}
+ 
+\begin{frame}{Numerical Schemes: CKLS(Contd.) }
+\begin{itemize}
+    \item We let $P^{n} = [P_{0}^{n}, P_{1}^{n} \cdots P_{M}^{n}]$ denote the vector of our numerical solutions at time level $n$.
+ 
+\item Then we can write (6) in matrix form as:
+\begin{equation*}
+    AP^{n+1} = BP^{n}, \quad n \ge 0
+\end{equation*}
+ 
+\item where, 
+\begin{align*}
+    \begin{split}
+        A = tridiag[b_{m-1}, b_{m}, b_{m+1}]
+    \end{split}\\
+    \begin{split}
+        B = tridiag[c_{m-1}, c_{m}, c_{m+1}]
+    \end{split}\\
+    \begin{split}
+        P^{0} = \textbf{1}, \mbox{ is the initial condition}
+    \end{split}
+\end{align*}
+ 
+ 
+\end{itemize}
+ 
+\end{frame}
+ 
+ 
+ \begin{frame}{Bond Pricing - Crank Nicolson}
+\begin{table}[htp]
+\begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+
+ \hline
+ \multicolumn{5}{|c|}{Crank Nicolson} \\
+ \hline
+ M & Price & Error & Order & cpu(s)\\
+ \hline
+ 10 & 0.494119 & 4.299682*$10^{-4}$ &  - & 0.126701 \\
+20 & 0.493887 & 9.006585*$10^{-4}$ & -1.066750 & 0.001917 \\
+40 & 0.494358 & 5.215585*$10^{-5}$ & 4.110079 & 0.001609 \\
+80 & 0.494334 & 3.025054*$10^{-6}$ & 4.107796 & 0.009457 \\
+160 & 0.494332 & 9.626092*$10^{-7}$ & 1.651939 & 0.193439 \\
+320 & 0.494332 & 2.520807*$10^{-7}$ & 1.933065 & 1.891023 \\
+ \hline
+ \multicolumn{5}{|c|}{Exact Price = 0.494332} \\
+ \hline
+ 
+\end{tabular}
+\caption{ Bond prices under the CIR model for T = 5}
+
+\end{table}
+
+ 
+\end{frame}
+
+
+\begin{frame}{Bond Pricing - Jains Scheme}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{Jains Scheme} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+     10 & 0.077237 & 8.437550e-01 & -21.674507 & 0.134101\\
+    20 & 0.496278 & 3.936669e-03 & 7.743705 & 0.002160\\
+    40 & 0.494340 & 1.558863e-05 & 7.980338 & 0.001976\\
+    80 & 0.494332 & 9.016281e-07 & 4.111818 & 0.010164\\
+    160 & 0.494332 & 6.187253e-08 & 3.865162 & 0.147673\\
+    320 & 0.494332 & 3.841779e-09 & 4.009452 & 1.758576\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.494332} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Bond prices under the CIR model for T = 5}
+    
+    \end{table}
+\end{frame}
+
+
+\begin{frame}{Bond Pricing - CIR Model}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{CIR Model , $\gamma = 0.5$} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+     10 & -0.070230 & 2.036439e+00 &  - & 0.111856\\
+    20 & 0.068492 & 1.078395e-02 &  7.561019 & 0.004561\\
+    40 & 0.067783 & 3.310128e-04 &  5.025855 & 0.007088\\
+    80 & 0.067761 & 2.553277e-06 &  7.018393 & 0.055595\\
+    160 & 0.067761 & 5.493039e-08 &  5.538602 & 0.865904\\
+    320 & 0.067761 & 1.704477e-09 &  5.010203 & 11.254604\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.067761} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ CIR bond prices for T = 30}
+    
+    \end{table}
+\end{frame}
+ 
+ 
+\begin{frame}{Bond Pricing - Vasicek Model}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+        \multicolumn{5}{|c|}{Vasicek Model, $\gamma = 0$} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & 0.225421 & 1.746344e-02 &  -23.288505 & 0.001316\\
+    20 & 0.220957 & 2.686124e-03 &  2.700740 & 0.000553\\
+    40 & 0.220960 & 2.674648e-03 &  0.006177 & 0.001816\\
+    80 & 0.221128 & 1.912379e-03 &  0.483980 & 0.016452\\
+    160 & 0.221373 & 8.102519e-04 &  1.238926 & 0.263427\\
+    320 & 0.221544 & 3.594945e-05 &  4.494329 & 2.778937\\
+     \hline
+     \multicolumn{5}{|c|}{CN Price = 0.221552} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Vasicek bond prices for T = 30}
+        
+    \end{table}
+\end{frame}
+
+
+\begin{frame}{Bond Pricing for different values of $\gamma$}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|  }
+    
+     \hline
+     M & $\gamma = 0.4$ & $\gamma = 0.6$ & $\gamma = 0.8$ & $\gamma = 1$\\
+     \hline
+    10 & 0.263470 & -0.045416 &  0.877085 & -7.068155\\
+    20 & 0.495876 & 0.486904 & 0.500708 & 0.566150\\
+    40 & 0.495851 & 0.493174 & 0.491772 & 0.492524\\
+    80 & 0.495872 & 0.493243 & 0.491933 & 0.491273\\
+    160 & 0.495876  & 0.493244 & 0.491934 & 0.491281\\
+    320 & 0.495877  & 0.493244  & 0.491934 & 0.491281\\
+     \hline
+     CN & 0.495877 & 0.493244 & 0.491935 & 0.491281\\
+     \hline
+     
+    \end{tabular}
+    \caption{ Bond prices under CKLS model for different values of the parameter $\gamma$ }
+    
+    \end{table}
+\end{frame}
+ 
+\begin{frame}{Interest Rate derivatives: Bond options}
+\begin{itemize}
+    \item  European Call option with maturity $T_{0}$ and strike price $K$ on a discount bond  with maturity $T$.
+    \item $V(r,\tau^{*}, T_{0})$ is the option price at time $\tau^{*}$, where $\tau^{*} = (T_{0}-t)$.
+    \item Solve the numerical scheme above for $V(r,\tau^{*}, T_{0})$.
+    \item Initial condition: $V(r,0,T) = (P(r,T_{0},T) - K)^{+}$. 
+\end{itemize}
+ 
+\end{frame}
+
+
+\begin{frame}{Bond Options}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+    \multicolumn{5}{|c|}{Bond options - Jain’s Scheme   $T_0 = 5$   } \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & -0.630244 & 6.959978e+00 &  - & 0.114196\\
+    20 & 0.093379 & 1.169493e-01 & 5.895127 & 0.004168\\
+    40 & 0.107834 & 1.974350e-02 & 2.566434 & 0.003878\\
+    80 & 0.105735 & 1.048494e-04 & 7.556915 & 0.027074\\
+    160 & 0.105745 & 1.184094e-05 & 3.146464 & 0.484453\\
+    320 & 0.105746 & 5.039296e-07 & 4.554417 & 5.361848\\
+     \hline
+     \multicolumn{5}{|c|}{CN Price = 0.105746} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ European bond option prices under the CIR model for option maturities $T_0 = 5$}
+        
+    \end{table}
+\end{frame}
+
+
+\begin{frame}{Bond Options}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+    \multicolumn{5}{|c|}{Bond options - Jain’s Scheme   $T_0 = 2$   } \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & -0.903869 & 6.502737e+00 &  - & 0.001319\\
+    20 & 0.146344 & 1.090612e-01 & 5.897837 & 0.000740\\
+    40 & 0.170098 & 3.555198e-02 & 1.617136 & 0.002763\\
+    80 & 0.164403 & 8.793394e-04 & 5.337366 & 0.025284\\
+    160 & 0.164417 & 9.673465e-04 & -0.137613 & 0.412210\\
+    320 & 0.164258 & 4.934918e-07 & 10.936791 & 5.251805\\
+     \hline
+     \multicolumn{5}{|c|}{CN Price = 0.164258} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ European bond option prices under the CIR model for option maturities $T_0 = 2$ }
+
+        
+    \end{table}
+\end{frame}
+
+\begin{frame}{Bond option pricing for different values of $\gamma$}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|  }
+    
+    \hline
+     M & $\gamma = 0.4$ & $\gamma = 0.6$ & $\gamma = 0.8$ & $\gamma = 1$\\
+     \hline
+    10 & -0.248573 & -0.882009 &  3.999268 & 202.308964\\
+    20 & 0.079077 & 0.096393 & 0.350941 & -0.117450\\
+    40 & 0.096527 & 0.102405 & 0.067157 & -0.028959\\
+    80 & 0.104636 & 0.104537 & 0.103076 & 0.077795\\
+    160 & 0.106719  & 0.104502 & 0.103184 & 0.102636\\
+    
+     \hline
+     CN & 0.107358 & 0.104502 & 0.103184 & 0.102636\\
+     \hline
+     
+    \end{tabular}
+    \caption{ European call option prices under CKLS for different values of the parameter $\gamma$ }
+
+    
+    \end{table}
+\end{frame}
+ 
+\begin{frame}{Interest Rate derivatives: Coupon bonds}
+\begin{itemize}
+    \item Bond with face value $\widecheck{f}$, which makes annual coupon payments of amount $\widecheck{a}$ at regular intervals.
+    \item Solve the numerical scheme above with initial condition: $P(r,0,T)=\widecheck{f} + \widecheck{a}$.
+    \item If the time level coincides with a coupon payment date,  $P(r,\tau^{*}, T) = P(r,\tau^{*}, T) + \widecheck{a}$.
+\end{itemize}
+ 
+\end{frame}
+ 
+ 
+ \begin{frame}{Coupon Bonds - Crank Nicolson}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{Crank Nicolson} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & 0.669083 & 2.291907e-01 &  - & 0.002466\\
+    20 & 0.668785 & 2.286436e-01 & 0.003448 & 0.000886\\
+    40 & 0.543442 & 1.628485e-03 & 7.133426 & 0.001454\\
+    80 & 0.544090 & 4.372947e-04 & 1.896853 & 0.014356\\
+    160 & 0.544271 & 1.045224e-04 & 2.064793 & 0.141440\\
+    320 & 0.544317 & 2.085409e-05 & 2.325410 & 1.816633\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.544328} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Coupon bond prices under the CIR model with an annual coupon of 5\% and face value 100}
+        
+    \end{table}
+\end{frame}
+
+ \begin{frame}{Coupon Bonds - Jains Scheme}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{Jains Scheme} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & 0.225386 & 5.859382e-01 & -14.778130 & 0.149883\\
+    20 & 0.672187 & 2.348919e-01 & 1.318752 & 0.002340\\
+    40 & 0.550025 & 1.046621e-02 & 4.488186 & 0.001879\\
+    80 & 0.547292 & 5.445476e-03 & 0.942609 & 0.009910\\
+    160 & 0.545112 & 1.440180e-03 & 1.918809 & 0.156448\\
+    320 & 0.544455 & 2.323919e-04 & 2.631618 & 1.815153\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.544328} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Coupon bond prices under the CIR model with an annual coupon of 5\% and face value 100}
+        \end{table}
+\end{frame}
+ 
+ 
+
+ 
+\begin{frame}{Interest Rate derivatives: European option on coupon bond}
+ 
+\begin{itemize}
+    \item Underlying security is a coupon paying bond with maturity $T$, and the option has a maturity $T_{0}$.
+    \item We solve the numerical scheme above with initial condition $V(r,0,T_{0}) = (P(r,T_{0},T) - K)^{+}$.
+    \item The coupon amount $\widecheck{a}$ is added if the time level corresponds to a coupon payment.
+\end{itemize}
+ 
+\end{frame}
+
+
+ \begin{frame}{European option with coupon bonds - Crank Nicolson}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+      \multicolumn{5}{|c|}{Crank Nicolson} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & 0.780053 & 3.746525e+00 &  - & 0.003316\\
+    20 & 0.777185 & 3.729079e+00 & 0.006734 & 0.001655\\
+    40 & 0.161900 & 1.486120e-02 & 7.971125 & 0.002517\\
+    80 & 0.163737 & 3.682374e-03 & 2.012843 & 0.023734\\
+    160 & 0.164220 & 7.394183e-04 & 2.316173 & 0.270184\\
+    320 & 0.164342 & 6.084912e-12 & 26.856579 & 3.570016\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.164342} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ European option for CIR model on bond with face value 100 with an annual coupon of 10\% compounded semiannually}
+        
+    \end{table}
+\end{frame}
+ 
+
+ \begin{frame}{European option with coupon bonds - Jains scheme}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{Jains Scheme} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+    10 & 0.438384 & 1.667512e+00 & -37.995597 & 0.198804\\
+    20 & 0.745727 & 3.537657e+00 & -1.085097 & 0.003461\\
+    40 & 0.171579 & 4.403502e-02 & 6.327999 & 0.004141\\
+    80 & 0.170064 & 3.482024e-02 & 0.338725 & 0.026837\\
+    160 & 0.166132 & 1.089452e-02 & 1.676324 & 0.460876\\
+    320 & 0.164657 & 1.915871e-03 & 2.507530 & 5.796097\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.164342} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ European option for CIR model on bond with face value 100 with an annual coupon of 10\% compounded semiannually}
+        
+    \end{table}
+\end{frame}
+ 
+
+
+\begin{frame}{Interest Rate derivatives: Bermudan option on coupon bond}
+ 
+\begin{itemize}
+    \item A Bermudan call option allows us to exercise the option on only some specified dates.
+    \item We solve the numerical scheme using the initial condition $V(r,0,T_{0}) = (P(r,T_{0},T) - K)^{+}$.
+    \item Add the coupon amount $\widecheck{a}$ if the time level corresponds to a coupon payment date.
+    \item If the time level corresponds to one of the exercise dates then, the option price becomes $V(r,\tau^{*}_{n+1}, T_{0}) = max(V(r,\tau^{*}_{n+1}, T_{0}), (P(r,\tau^{*}_{n+1}, T)-K)^{+})$.
+\end{itemize}
+ 
+\end{frame}
+
+
+
+ \begin{frame}{Bermudan option with coupon bonds - Crank Nicolson}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+     \multicolumn{5}{|c|}{Crank Nicolson} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+     16 & 0.476050 & 2.215275e-01 &  - & 0.002723\\
+    32 & 0.475983 & 2.213535e-01 & 0.001134 & 0.000992\\
+    64 & 0.389114 & 1.548907e-03 & 7.158958 & 0.002705\\
+    128 & 0.389575 & 3.647856e-04 & 2.086129 & 0.062997\\
+    256 & 0.483218 & 2.399198e-01 & -9.361288 & 0.689437\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.389717} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Bermudan put option under CIR model on a bond with face value 1000 with coupon of 4\% compounded annually}
+
+        
+    \end{table}
+\end{frame}
+ 
+ 
+  \begin{frame}{Bermudan option with coupon bonds - Jains scheme}
+    \begin{table}[htp]
+    \begin{tabular}{ |p{1cm}|p{1.7cm}|p{2.5cm}|p{2cm}|p{1.5cm}|  }
+    
+     \hline
+    \multicolumn{5}{|c|}{Jains Scheme} \\
+     \hline
+     M & Price & Error & Order & cpu(s)\\
+     \hline
+     16 & 0.475490 & 2.200898e-01 & 0.124460 & 0.151726\\
+    32 & 0.475993 & 2.213802e-01 & -0.008434 & 0.003406\\
+    64 & 0.389160 & 1.429594e-03 & 7.274776 & 0.004711\\
+    128 & 0.389665 & 1.348059e-04 & 3.406650 & 0.109706\\
+    256 & 0.483437 & 2.404822e-01 & -10.800831 & 0.610421\\
+     \hline
+     \multicolumn{5}{|c|}{Exact Price = 0.389717} \\
+     \hline
+     
+    \end{tabular}
+    \caption{ Bermudan put option under CIR model on a bond with face value 1000 with coupon of 4\% compounded annually}
+
+        
+    \end{table}
+\end{frame}
+ 
+\end{document}
