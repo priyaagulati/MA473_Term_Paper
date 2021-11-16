@@ -1,0 +1,34 @@
+gamma = 0.400000, CN Price = 0.495877
+M = 10, Price = 0.263470 
+M = 20, Price = 0.495876 
+M = 40, Price = 0.495851 
+M = 80, Price = 0.495872 
+M = 160, Price = 0.495876 
+M = 320, Price = 0.495877 
+
+
+gamma = 0.600000, CN Price = 0.493244
+M = 10, Price = -0.045416 
+M = 20, Price = 0.486904 
+M = 40, Price = 0.493174 
+M = 80, Price = 0.493243 
+M = 160, Price = 0.493244 
+M = 320, Price = 0.493244 
+
+
+gamma = 0.800000, CN Price = 0.491935
+M = 10, Price = 0.877085 
+M = 20, Price = 0.500708 
+M = 40, Price = 0.491772 
+M = 80, Price = 0.491933 
+M = 160, Price = 0.491934 
+M = 320, Price = 0.491934 
+
+
+gamma = 1.000000, CN Price = 0.491281
+M = 10, Price = -7.068155 
+M = 20, Price = 0.566150 
+M = 40, Price = 0.492524 
+M = 80, Price = 0.491273 
+M = 160, Price = 0.491281 
+M = 320, Price = 0.491281 

@@ -1,0 +1,41 @@
+T_0 = 0.500000
+Price = 0.753720, Cr Price = 0.753650
+Price = 0.741362, Cr Price = 0.741292
+Price = 0.729005, Cr Price = 0.728936
+Price = 0.716725, Cr Price = 0.716656
+Price = 0.705808, Cr Price = 0.705738
+
+T_0 = 1.000000
+Price = 0.780780, Cr Price = 0.780667
+Price = 0.768421, Cr Price = 0.768308
+Price = 0.756064, Cr Price = 0.755951
+Price = 0.743716, Cr Price = 0.743602
+Price = 0.731438, Cr Price = 0.731325
+
+T_0 = 1.500000
+Price = 0.807165, Cr Price = 0.806974
+Price = 0.794806, Cr Price = 0.794616
+Price = 0.782448, Cr Price = 0.782258
+Price = 0.770092, Cr Price = 0.769902
+Price = 0.757747, Cr Price = 0.757557
+
+T_0 = 2.000000
+Price = 0.832819, Cr Price = 0.832514
+Price = 0.820461, Cr Price = 0.820155
+Price = 0.808103, Cr Price = 0.807797
+Price = 0.795745, Cr Price = 0.795439
+Price = 0.783389, Cr Price = 0.783084
+
+T_0 = 3.000000
+Price = 0.881831, Cr Price = 0.881168
+Price = 0.869473, Cr Price = 0.868809
+Price = 0.857114, Cr Price = 0.856451
+Price = 0.844756, Cr Price = 0.844093
+Price = 0.832398, Cr Price = 0.831735
+
+T_0 = 4.000000
+Price = 0.927745, Cr Price = 0.926542
+Price = 0.915387, Cr Price = 0.914184
+Price = 0.903029, Cr Price = 0.901826
+Price = 0.890671, Cr Price = 0.889468
+Price = 0.878312, Cr Price = 0.877109

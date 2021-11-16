@@ -1,0 +1,18 @@
+Exact Price = 0.544328
+
+Crank Nicolson
+M = 10, Price = 0.669083, Error = 2.291907e-01, Order = -, cpu = 0.002466
+M = 20, Price = 0.668785, Error = 2.286436e-01, Order = 0.003448, cpu = 0.000886
+M = 40, Price = 0.543442, Error = 1.628485e-03, Order = 7.133426, cpu = 0.001454
+M = 80, Price = 0.544090, Error = 4.372947e-04, Order = 1.896853, cpu = 0.014356
+M = 160, Price = 0.544271, Error = 1.045224e-04, Order = 2.064793, cpu = 0.141440
+M = 320, Price = 0.544317, Error = 2.085409e-05, Order = 2.325410, cpu = 1.816633
+
+
+Jains Scheme
+M = 10, Price = 0.225386, Error = 5.859382e-01, Order = -14.778130, cpu = 0.149883
+M = 20, Price = 0.672187, Error = 2.348919e-01, Order = 1.318752, cpu = 0.002340
+M = 40, Price = 0.550025, Error = 1.046621e-02, Order = 4.488186, cpu = 0.001879
+M = 80, Price = 0.547292, Error = 5.445476e-03, Order = 0.942609, cpu = 0.009910
+M = 160, Price = 0.545112, Error = 1.440180e-03, Order = 1.918809, cpu = 0.156448
+M = 320, Price = 0.544455, Error = 2.323919e-04, Order = 2.631618, cpu = 1.815153
